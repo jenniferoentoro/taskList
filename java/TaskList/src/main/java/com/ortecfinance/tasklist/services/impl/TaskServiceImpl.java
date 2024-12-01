@@ -133,7 +133,7 @@ public class TaskServiceImpl implements TaskService {
         }
     }
 
-    private Map<Long, List<Task>> groupTasksByProject(List<Task> tasks) {
+    public Map<Long, List<Task>> groupTasksByProject(List<Task> tasks) {
         return tasks.stream()
                 .collect(Collectors.groupingBy(task -> task.getProject().getId()));
     }

@@ -13,6 +13,7 @@ import java.io.BufferedReader;
 import java.io.IOException;
 import java.io.InputStreamReader;
 import java.io.PrintWriter;
+import java.text.ParseException;
 import java.text.SimpleDateFormat;
 import java.util.Date;
 import java.util.List;
@@ -195,8 +196,23 @@ public class TaskList implements Runnable {
         }
     }
 
+    private boolean isValidDate(String dateStr) {
+        SimpleDateFormat dateFormat = new SimpleDateFormat("dd-MM-yyyy");
+        dateFormat.setLenient(false);
+        try {
+            Date date = dateFormat.parse(dateStr);
+            return true;
+        } catch (ParseException e) {
+            return false;
+        }
+    }
+
     private void deadline(String commandLine) {
         String[] subcommandRest = splitCommandLine(commandLine);
+        if (!isValidDate(subcommandRest[1])) {
+            out.println("Invalid date format. Please use dd-MM-yyyy format.");
+            return;
+        }
         Boolean success = taskService.setDeadline(Long.parseLong(subcommandRest[0]), subcommandRest[1]);
         if (!success) {
             out.println("Task not found");
