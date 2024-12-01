@@ -15,8 +15,6 @@ public interface TaskService {
 
     Boolean setDeadline(long taskId, String deadline);
 
-    TaskResponse findTaskById(long taskId);
-
     List<TaskResponse>  findTasksByProjectId(long projectId);
 
     List<ProjectDeadlineResponse> findAllTasksGroupedByProjectWithDeadlines(String findDeadline);

@@ -81,17 +81,6 @@ public class TaskServiceImpl implements TaskService {
         return false;
     }
 
-
-    @Override
-    public TaskResponse findTaskById(long taskId) {
-        Optional<Task> task = taskRepository.findById(taskId);
-        if (task.isPresent()) {
-            return modelMapper.map(task.get(), TaskResponse.class);
-        }
-        throw new CustomException("Task not found");
-    }
-
-
     @Override
     public List<TaskResponse> findTasksByProjectId(long projectId) {
         List<Task> taskResponse = taskRepository.findByProjectId(projectId);

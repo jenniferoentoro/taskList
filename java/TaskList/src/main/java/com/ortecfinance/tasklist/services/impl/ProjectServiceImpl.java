@@ -4,7 +4,6 @@ import com.ortecfinance.tasklist.DTO.Project.ProjectDTO;
 import com.ortecfinance.tasklist.DTO.Project.ProjectResponse;
 import com.ortecfinance.tasklist.DTO.Task.TaskResponse;
 import com.ortecfinance.tasklist.DTO.Task.TaskWithProjectResponse;
-import com.ortecfinance.tasklist.helper.execptions.CustomException;
 import com.ortecfinance.tasklist.models.entities.Project;
 import com.ortecfinance.tasklist.models.repositories.ProjectRepository;
 import com.ortecfinance.tasklist.services.ProjectService;
@@ -39,7 +38,7 @@ public class ProjectServiceImpl implements ProjectService {
             return false;
         }
         projectRepository.save(modelMapper.map(project, Project.class));
-        
+
         return true;
     }
 
