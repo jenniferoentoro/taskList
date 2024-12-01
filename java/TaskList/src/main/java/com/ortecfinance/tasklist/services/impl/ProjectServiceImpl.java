@@ -4,6 +4,7 @@ import com.ortecfinance.tasklist.DTO.Project.ProjectDTO;
 import com.ortecfinance.tasklist.DTO.Project.ProjectResponse;
 import com.ortecfinance.tasklist.DTO.Task.TaskResponse;
 import com.ortecfinance.tasklist.DTO.Task.TaskWithProjectResponse;
+import com.ortecfinance.tasklist.helper.execptions.CustomException;
 import com.ortecfinance.tasklist.models.entities.Project;
 import com.ortecfinance.tasklist.models.repositories.ProjectRepository;
 import com.ortecfinance.tasklist.services.ProjectService;
@@ -13,7 +14,6 @@ import org.modelmapper.ModelMapper;
 import org.springframework.stereotype.Service;
 
 import java.util.ArrayList;
-import java.util.Arrays;
 import java.util.List;
 import java.util.Optional;
 
@@ -32,21 +32,29 @@ public class ProjectServiceImpl implements ProjectService {
     }
 
     @Override
-    public Boolean addProject(ProjectDTO project) {
-        Optional<ProjectResponse> projectResponse = findProjectByName(project.getName());
-        if (projectResponse.isPresent()) {
-            return false;
-        }
-        projectRepository.save(modelMapper.map(project, Project.class));
+    public ProjectResponse addProject(ProjectDTO project) {
+        Project projectEntity = projectRepository.save(modelMapper.map(project, Project.class));
+        return modelMapper.map(projectEntity, ProjectResponse.class);
+    }
 
-        return true;
+    @Override
+    public ProjectResponse removeProject(long projectId) {
+        Optional<Project> project = projectRepository.findById(projectId);
+        if (project.isPresent()) {
+            projectRepository.delete(project.get());
+            return modelMapper.map(project.get(), ProjectResponse.class);
+        }
+        throw new CustomException("Project not found");
     }
 
 
     @Override
-    public Optional<ProjectResponse> findProjectByName(String projectName) {
-        Optional<Project> project = projectRepository.findByName(projectName);
-        return project.map(value -> modelMapper.map(value, ProjectResponse.class));
+    public ProjectResponse findProjectById(long projectId) {
+        Optional<Project> project = projectRepository.findById(projectId);
+        if (project.isPresent()) {
+            return modelMapper.map(project.get(), ProjectResponse.class);
+        }
+        throw new CustomException("Project not found");
     }
 
     @Override

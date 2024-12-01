@@ -8,9 +8,11 @@ import java.util.List;
 import java.util.Optional;
 
 public interface ProjectService {
-    Boolean addProject(ProjectDTO project);
+    ProjectResponse addProject(ProjectDTO project);
 
-    Optional<ProjectResponse> findProjectByName(String projectName);
+    ProjectResponse removeProject(long projectId);
+
+    ProjectResponse findProjectById(long projectId);
 
     List<TaskWithProjectResponse> findAllTasksGroupedByProject();
 

@@ -9,13 +9,17 @@ import com.ortecfinance.tasklist.DTO.Task.TaskWithProjectResponse;
 import java.util.List;
 
 public interface TaskService {
-    void addTask(TaskRequest task, long projectId);
+    TaskResponse addTask(TaskRequest task, long projectId);
 
-    Boolean updateStateTask(long taskId, Boolean done);
+    TaskResponse removeTask(long projectId, long taskId);
 
-    Boolean setDeadline(long taskId, String deadline);
+    TaskResponse updateStateTask(long projectId, long taskId, Boolean done);
 
-    List<TaskResponse>  findTasksByProjectId(long projectId);
+    TaskResponse setDeadline(long projectId, long taskId, String deadline);
+
+    TaskResponse findTaskByProjectIdAndId(long projectId, long taskId);
+
+    List<TaskResponse> findTasksByProjectId(long projectId);
 
     List<ProjectDeadlineResponse> findAllTasksGroupedByProjectWithDeadlines(String findDeadline);
 

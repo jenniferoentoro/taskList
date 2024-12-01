@@ -6,6 +6,7 @@ import com.ortecfinance.tasklist.helper.execptions.CustomException;
 import com.ortecfinance.tasklist.models.entities.Project;
 import com.ortecfinance.tasklist.models.entities.Task;
 import com.ortecfinance.tasklist.models.repositories.TaskRepository;
+import com.ortecfinance.tasklist.services.ProjectService;
 import com.ortecfinance.tasklist.services.TaskService;
 import jakarta.transaction.Transactional;
 import org.modelmapper.ModelMapper;
@@ -30,7 +31,10 @@ public class TaskServiceImpl implements TaskService {
     }
 
     @Override
-    public void addTask(TaskRequest taskRequest, long projectId) {
+    public TaskResponse addTask(TaskRequest taskRequest, long projectId) {
+        if (taskRequest.isDone() == null) {
+            taskRequest.setDone(false);
+        }
         Task task = modelMapper.map(taskRequest, Task.class);
         Project project = new Project();
         project.setId(projectId);
@@ -39,19 +43,31 @@ public class TaskServiceImpl implements TaskService {
             task.setDeadline(parseDate(taskRequest.getDeadline()));
         }
         taskRepository.save(task);
+
+        return modelMapper.map(task, TaskResponse.class);
+    }
+
+    @Override
+    public TaskResponse removeTask(long projectId, long taskId) {
+        Optional<Task> task = taskRepository.findById(taskId);
+        if (task.isPresent()) {
+            taskRepository.delete(task.get());
+            return modelMapper.map(task.get(), TaskResponse.class);
+        }
+        throw new CustomException("Task not found");
     }
 
 
     @Override
-    public Boolean updateStateTask(long taskId, Boolean done) {
-        Optional<Task> task = taskRepository.findById(taskId);
+    public TaskResponse updateStateTask(long projectId, long taskId, Boolean done) {
+        Optional<Task> task = taskRepository.findByProjectIdAndId(projectId, taskId);
         if (task.isPresent()) {
             Task taskFind = task.get();
             taskFind.setDone(done);
             taskRepository.save(taskFind);
-            return true;
+            return modelMapper.map(taskFind, TaskResponse.class);
         }
-        return false;
+        throw new CustomException("Task not found");
     }
 
     public Date parseDate(String date) {
@@ -70,15 +86,16 @@ public class TaskServiceImpl implements TaskService {
 
 
     @Override
-    public Boolean setDeadline(long taskId, String deadline) {
-        Optional<Task> task = taskRepository.findById(taskId);
+    public TaskResponse setDeadline(long projectId, long taskId, String deadline) {
+        Optional<Task> task = taskRepository.findByProjectIdAndId(projectId, taskId);
+
         if (task.isPresent()) {
             Task taskFind = task.get();
             taskFind.setDeadline(parseDate(deadline));
             taskRepository.save(taskFind);
-            return true;
+            return modelMapper.map(taskFind, TaskResponse.class);
         }
-        return false;
+        throw new CustomException("Task not found");
     }
 
     @Override
@@ -87,6 +104,14 @@ public class TaskServiceImpl implements TaskService {
         return Arrays.asList(modelMapper.map(taskResponse, TaskResponse[].class));
     }
 
+    @Override
+    public TaskResponse findTaskByProjectIdAndId(long projectId, long taskId) {
+        Optional<Task> task = taskRepository.findByProjectIdAndId(projectId, taskId);
+        if (task.isPresent()) {
+            return modelMapper.map(task.get(), TaskResponse.class);
+        }
+        throw new CustomException("Task not found in project");
+    }
 
     @Override
     public List<ProjectDeadlineResponse> findAllTasksGroupedByProjectWithDeadlines(String findDeadline) {
