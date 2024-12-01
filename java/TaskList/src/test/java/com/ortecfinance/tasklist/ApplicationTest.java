@@ -60,10 +60,11 @@ public final class ApplicationTest {
                 "  uncheck <task ID>",
                 "  today {show all tasks for today}",
                 "  deadline <task ID> <date> {add a task with deadline}",
+                "  view-by-deadline {show all tasks by deadline}",
+                "  view-by-deadline-group {show all tasks by deadline and project}",
                 "  quit",
                 ""
         );
-
         execute("quit");
     }
 
@@ -237,7 +238,7 @@ public final class ApplicationTest {
         readLines(
                 "training",
                 "    [ ] 1: Four Elements of Simple Design | Deadline: 20-10-2024",
-                "    [ ] 2: SOLID | Deadline: " +today,
+                "    [ ] 2: SOLID | Deadline: " + today,
                 "    [ ] 3: Coupling and Cohesion | Deadline: 01-01-2025",
                 ""
         );
@@ -261,6 +262,117 @@ public final class ApplicationTest {
         execute("add task training SOLID");
         execute("deadline 1 22-22-2024");
         readLines("Invalid date format.");
+        execute("quit");
+    }
+
+    @Test
+    void it_handles_view_by_deadline() throws IOException {
+        execute("add project secrets");
+        execute("add task secrets Eat more donuts.");
+        execute("add task secrets Destroy all humans.");
+
+        execute("add project training");
+        execute("add task training Four Elements of Simple Design");
+        execute("add task training SOLID");
+        execute("add task training Coupling and Cohesion");
+
+        execute("deadline 1 20-11-2024");
+        execute("deadline 2 28-11-2024");
+        execute("deadline 3 20-11-2024");
+        execute("deadline 5 30-11-2024");
+        execute("view-by-deadline");
+
+        readLines(
+                "20-11-2024:",
+                "    [ ] 1: Eat more donuts.",
+                "    [ ] 3: Four Elements of Simple Design",
+                "28-11-2024:",
+                "    [ ] 2: Destroy all humans.",
+                "30-11-2024:",
+                "    [ ] 5: Coupling and Cohesion",
+                "No deadline:",
+                "    [ ] 4: SOLID",
+                ""
+        );
+        execute("quit");
+    }
+
+    @Test
+    void it_handles_empty_view_by_deadline() throws IOException {
+        execute("view-by-deadline");
+        readLines("");
+        execute("quit");
+    }
+
+    @Test
+    void it_handles_no_specify_view_by_deadline() throws IOException {
+        execute("add project secrets");
+        execute("add task secrets Eat more donuts.");
+        execute("view-by-deadline");
+        readLines(
+                "No deadline:",
+                "    [ ] 1: Eat more donuts.",
+                ""
+        );
+        execute("quit");
+    }
+
+    @Test
+    void it_handles_invalid_view_by_deadline_group() throws IOException {
+        execute("add project secrets");
+        execute("add task secrets Eat more donuts.");
+        execute("add task secrets Destroy all humans.");
+
+        execute("add project training");
+        execute("add task training Four Elements of Simple Design");
+        execute("add task training SOLID");
+        execute("add task training Coupling and Cohesion");
+
+        execute("deadline 1 20-11-2024");
+        execute("deadline 2 28-11-2024");
+        execute("deadline 3 20-11-2024");
+        execute("deadline 5 30-11-2024");
+        execute("view-by-deadline-group");
+
+
+        readLines(
+                "20-11-2024:",
+                "    training:",
+                "    [ ] 3: Four Elements of Simple Design",
+                "    secrets:",
+                "    [ ] 1: Eat more donuts.",
+                "28-11-2024:",
+                "    secrets:",
+                "    [ ] 2: Destroy all humans.",
+                "30-11-2024:",
+                "    training:",
+                "    [ ] 5: Coupling and Cohesion",
+                "No deadline:",
+                "    training:",
+                "    [ ] 4: SOLID",
+                ""
+        );
+        execute("quit");
+    }
+
+    @Test
+    void it_handles_empty_view_by_deadline_group() throws IOException {
+        execute("view-by-deadline-group");
+        readLines("");
+        execute("quit");
+    }
+
+    @Test
+    void it_handles_no_specify_view_by_deadline_group() throws IOException {
+        execute("add project secrets");
+        execute("add task secrets Eat more donuts.");
+        execute("view-by-deadline-group");
+        readLines(
+                "No deadline:",
+                "    secrets:",
+                "    [ ] 1: Eat more donuts.",
+                ""
+        );
         execute("quit");
     }
 
@@ -359,6 +471,7 @@ public final class ApplicationTest {
         );
         execute("quit");
     }
+
 
     private void execute(String command) throws IOException {
         read(PROMPT);

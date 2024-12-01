@@ -7,6 +7,7 @@ import java.io.PrintWriter;
 import java.text.ParseException;
 import java.text.SimpleDateFormat;
 import java.util.*;
+import java.util.stream.Collectors;
 
 public final class TaskList implements Runnable {
     private static final String QUIT = "quit";
@@ -60,12 +61,89 @@ public final class TaskList implements Runnable {
             case "check" -> checkUnCheck(commandRest[1], "true");
             case "uncheck" -> checkUnCheck(commandRest[1], "false");
             case "help" -> help();
+            case "view-by-deadline" -> viewByDeadline();
+            case "view-by-deadline-group" -> viewByDeadlineGroup();
             default -> error(command);
         }
     }
 
     private static final SimpleDateFormat dateFormatter = new SimpleDateFormat("dd-MM-yyyy");
     private static final String todayDate = dateFormatter.format(new Date());
+
+    /***
+     * View all tasks by deadline (Group tasks by deadline)
+     * Print tasks with no deadline at the end
+     */
+    private void viewByDeadline() {
+
+        // Group tasks by deadline
+        Map<String, List<Task>> groupedTasks = tasks.entrySet().stream()
+                .flatMap(entry -> entry.getValue().stream())
+                .collect(Collectors.groupingBy(
+                        // Group by deadline if available, else group by "No deadline"
+                        task -> task.getDeadline() != null
+                                ? dateFormatter.format(task.getDeadline())
+                                : "No deadline",
+                        () -> new TreeMap<>((key1, key2) -> {
+                            // Sort by deadline, with "No deadline" at the end
+                            if ("No deadline".equals(key1)) return 1;
+                            if ("No deadline".equals(key2)) return -1;
+                            try {
+                                // Parse and compare dates
+                                return dateFormatter.parse(key1).compareTo(dateFormatter.parse(key2));
+                            } catch (ParseException e) {
+                                throw new RuntimeException("Invalid date format", e);
+                            }
+                        }),
+                        // Collect tasks
+                        Collectors.toList()));
+
+        // Print tasks grouped by deadline (as desired output)
+        groupedTasks.forEach((deadline, tasks) -> {
+            out.printf("%s:%n", deadline);
+            tasks.forEach(task -> out.printf("    [%c] %d: %s%n", (task.isDone() ? 'x' : ' '), task.getId(), task.getDescription()));
+        });
+        out.println();
+    }
+
+    /***
+     * View all tasks by deadline and project
+     * Print tasks with no deadline at the end
+     */
+    private void viewByDeadlineGroup() {
+        // Group tasks by deadline and project
+        Map<String, Map<String, List<Task>>> groupedTasks = tasks.entrySet().stream()
+                .flatMap(entry -> entry.getValue().stream().map(task -> Map.entry(entry.getKey(), task)))
+                .collect(Collectors.groupingBy(
+                        // Group by deadline if available, else group by "No deadline"
+                        entry -> entry.getValue().getDeadline() != null
+                                ? dateFormatter.format(entry.getValue().getDeadline())
+                                : "No deadline",
+                        () -> new TreeMap<>((key1, key2) -> {
+                            // Sort by deadline, with "No deadline" at the end
+                            if ("No deadline".equals(key1)) return 1;
+                            if ("No deadline".equals(key2)) return -1;
+                            try {
+                                // Parse and compare dates
+                                return dateFormatter.parse(key1).compareTo(dateFormatter.parse(key2));
+                            } catch (ParseException e) {
+                                throw new RuntimeException("Invalid date format", e);
+                            }
+                        }),
+                        Collectors.groupingBy(Map.Entry::getKey,
+                                Collectors.mapping(Map.Entry::getValue, Collectors.toList()))
+                ));
+
+        // Print tasks grouped by deadline and project (as desired output)
+        groupedTasks.forEach((deadline, projects) -> {
+            out.printf("%s:%n", deadline);
+            projects.forEach((project, tasks) -> {
+                out.printf("    %s:%n", project);
+                tasks.forEach(task -> out.printf("    [%c] %d: %s%n", (task.isDone() ? 'x' : ' '), task.getId(), task.getDescription()));
+            });
+        });
+        out.println();
+    }
 
 
     private void printTask(Task task) {
@@ -187,6 +265,8 @@ public final class TaskList implements Runnable {
         out.println("  uncheck <task ID>");
         out.println("  today {show all tasks for today}");
         out.println("  deadline <task ID> <date> {add a task with deadline}");
+        out.println("  view-by-deadline {show all tasks by deadline}");
+        out.println("  view-by-deadline-group {show all tasks by deadline and project}");
         out.println("  quit");
         out.println();
     }
