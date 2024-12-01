@@ -9,5 +9,12 @@ import java.util.List;
 import java.util.Optional;
 
 public interface TaskRepository extends JpaRepository<Task, Long> {
+    List<Task> findByProjectId(long projectId);
+
+    @Query("SELECT DISTINCT t.deadline FROM Task t ORDER BY t.deadline ASC")
+    List<Date> findDistinctDeadline();
+
+
+    List<Task> findByDeadline(Date deadline);
 
 }
