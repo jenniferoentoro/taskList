@@ -5,11 +5,12 @@ import com.ortecfinance.tasklist.DTO.Project.ProjectResponse;
 import com.ortecfinance.tasklist.DTO.Task.TaskWithProjectResponse;
 
 import java.util.List;
+import java.util.Optional;
 
 public interface ProjectService {
     Boolean addProject(ProjectDTO project);
 
-    ProjectResponse findProjectByName(String projectName);
+    Optional<ProjectResponse> findProjectByName(String projectName);
 
     List<TaskWithProjectResponse> findAllTasksGroupedByProject();
 

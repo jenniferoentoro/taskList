@@ -16,6 +16,7 @@ import java.io.PrintWriter;
 import java.text.SimpleDateFormat;
 import java.util.Date;
 import java.util.List;
+import java.util.Optional;
 
 @Component
 public class TaskList implements Runnable {
@@ -161,7 +162,7 @@ public class TaskList implements Runnable {
                     : "No deadline";
         }
 
-        if (deadline.equals("No deadline")) {
+        if (deadline.equals("No deadline") || !(task instanceof TaskResponse)) {
             out.printf("    [%c] %d: %s%n",
                     (task.isDone() ? 'x' : ' '), task.getId(), task.getDescription());
         } else {
@@ -203,12 +204,12 @@ public class TaskList implements Runnable {
     }
 
     private void addTask(String project, String description) {
-        ProjectResponse projectResponse = projectService.findProjectByName(project);
-        if (projectResponse == null) {
+        Optional<ProjectResponse> projectResponse = projectService.findProjectByName(project);
+        if (projectResponse.isEmpty()) {
             out.printf("Project %s not found%n", project);
             return;
         }
-        taskService.addTask(new TaskRequest(description), projectResponse.getId());
+        taskService.addTask(new TaskRequest(description), projectResponse.get().getId());
     }
 
 

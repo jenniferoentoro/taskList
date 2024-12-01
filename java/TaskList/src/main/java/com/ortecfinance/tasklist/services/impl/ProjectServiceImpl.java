@@ -33,8 +33,8 @@ public class ProjectServiceImpl implements ProjectService {
 
     @Override
     public Boolean addProject(ProjectDTO project) {
-        ProjectResponse projectResponse = findProjectByName(project.getName());
-        if (projectResponse != null) {
+        Optional<ProjectResponse> projectResponse = findProjectByName(project.getName());
+        if (projectResponse.isPresent()) {
             return false;
         }
         projectRepository.save(modelMapper.map(project, Project.class));
@@ -44,9 +44,9 @@ public class ProjectServiceImpl implements ProjectService {
 
 
     @Override
-    public ProjectResponse findProjectByName(String projectName) {
+    public Optional<ProjectResponse> findProjectByName(String projectName) {
         Optional<Project> project = projectRepository.findByName(projectName);
-        return project.map(value -> modelMapper.map(value, ProjectResponse.class)).orElse(null);
+        return project.map(value -> modelMapper.map(value, ProjectResponse.class));
     }
 
     @Override
