@@ -37,6 +37,13 @@ public class TaskList implements Runnable {
         this.taskService = taskService;
     }
 
+    public TaskList(ProjectService projectService, TaskService taskService, BufferedReader reader, PrintWriter writer) {
+        this.in = reader;
+        this.out = writer;
+        this.projectService = projectService;
+        this.taskService = taskService;
+    }
+
     public static void startConsole(TaskList taskList) {
         taskList.run();
     }
