@@ -4,10 +4,9 @@ import java.io.BufferedReader;
 import java.io.IOException;
 import java.io.InputStreamReader;
 import java.io.PrintWriter;
-import java.util.ArrayList;
-import java.util.LinkedHashMap;
-import java.util.List;
-import java.util.Map;
+import java.text.ParseException;
+import java.text.SimpleDateFormat;
+import java.util.*;
 
 public final class TaskList implements Runnable {
     private static final String QUIT = "quit";
@@ -17,6 +16,7 @@ public final class TaskList implements Runnable {
     private final PrintWriter out;
 
     private long lastId = 0;
+
 
     public static void startConsole() {
         BufferedReader in = new BufferedReader(new InputStreamReader(System.in));
@@ -35,11 +35,13 @@ public final class TaskList implements Runnable {
             out.print("> ");
             out.flush();
             String command;
+
             try {
                 command = in.readLine();
             } catch (IOException e) {
                 throw new RuntimeException(e);
             }
+
             if (command.equals(QUIT)) {
                 break;
             }
@@ -51,46 +53,85 @@ public final class TaskList implements Runnable {
         String[] commandRest = commandLine.split(" ", 2);
         String command = commandRest[0];
         switch (command) {
-            case "show":
-                show();
-                break;
-            case "add":
-                add(commandRest[1]);
-                break;
-            case "check":
-                check(commandRest[1]);
-                break;
-            case "uncheck":
-                uncheck(commandRest[1]);
-                break;
-            case "help":
-                help();
-                break;
-            default:
-                error(command);
-                break;
+            case "show" -> show();
+            case "add" -> add(commandRest[1]);
+            case "deadline" -> deadline(commandRest[1]);
+            case "today" -> showToday();
+            case "check" -> checkUnCheck(commandRest[1], "true");
+            case "uncheck" -> checkUnCheck(commandRest[1], "false");
+            case "help" -> help();
+            default -> error(command);
+        }
+    }
+
+    private static final SimpleDateFormat dateFormatter = new SimpleDateFormat("dd-MM-yyyy");
+    private static final String todayDate = dateFormatter.format(new Date());
+
+
+    private void printTask(Task task) {
+        if (task.getDeadline() != null) {
+            String formattedDeadline = dateFormatter.format(task.getDeadline());
+            out.printf("    [%c] %d: %s | Deadline: %s%n", (task.isDone() ? 'x' : ' '), task.getId(), task.getDescription(), formattedDeadline);
+        } else {
+            out.printf("    [%c] %d: %s%n", (task.isDone() ? 'x' : ' '), task.getId(), task.getDescription());
         }
     }
 
     private void show() {
-        for (Map.Entry<String, List<Task>> project : tasks.entrySet()) {
-            out.println(project.getKey());
-            for (Task task : project.getValue()) {
-                out.printf("    [%c] %d: %s%n", (task.isDone() ? 'x' : ' '), task.getId(), task.getDescription());
-            }
+        tasks.forEach((projectName, taskList) -> {
+            out.println(projectName);
+            taskList.forEach(this::printTask);
             out.println();
+        });
+    }
+
+    private void showToday() {
+        tasks.forEach((projectName, taskList) -> {
+            taskList.stream()
+                    .filter(task -> task.getDeadline() != null && todayDate.equals(dateFormatter.format(task.getDeadline())))
+                    .findFirst()
+                    .ifPresent(task -> {
+                        //print project key if there is a task with deadline today
+                        out.println(projectName);
+                        taskList.stream()
+                                .filter(t -> t.getDeadline() != null && todayDate.equals(dateFormatter.format(t.getDeadline())))
+                                .forEach(this::printTask);
+                        out.println();
+                    });
+        });
+    }
+
+
+    private Date parseDate(String date) {
+        try {
+            SimpleDateFormat formatter = new SimpleDateFormat("dd-MM-yyyy");
+            formatter.setLenient(false);
+            return formatter.parse(date);
+        } catch (ParseException e) {
+            out.println("Invalid date format.");
+            return null;
         }
     }
 
+    private String[] splitCommandLine(String commandLine) {
+        return commandLine.split(" ", 2);
+    }
+
     private void add(String commandLine) {
-        String[] subcommandRest = commandLine.split(" ", 2);
-        String subcommand = subcommandRest[0];
-        if (subcommand.equals("project")) {
-            addProject(subcommandRest[1]);
-        } else if (subcommand.equals("task")) {
-            String[] projectTask = subcommandRest[1].split(" ", 2);
-            addTask(projectTask[0], projectTask[1]);
+        String[] subcommandRest = splitCommandLine(commandLine);
+
+        switch (subcommandRest[0].toLowerCase()) {
+            case "project" -> addProject(subcommandRest[1]);
+            case "task" -> {
+                String[] projectTask = subcommandRest[1].split(" ", 2);
+                addTask(projectTask[0], projectTask[1]);
+            }
         }
+    }
+
+    private void deadline(String commandLine) {
+        String[] subcommandRest = splitCommandLine(commandLine);
+        updateTask(subcommandRest[0], "deadline", subcommandRest[1]);
     }
 
     private void addProject(String name) {
@@ -107,26 +148,34 @@ public final class TaskList implements Runnable {
         projectTasks.add(new Task(nextId(), description, false));
     }
 
-    private void check(String idString) {
-        setDone(idString, true);
+    private void checkUnCheck(String idString, String isDone) {
+        updateTask(idString, "done", isDone);
     }
 
-    private void uncheck(String idString) {
-        setDone(idString, false);
-    }
 
-    private void setDone(String idString, boolean done) {
+    private void updateTask(String idString, String action, String dateOrDone) {
         int id = Integer.parseInt(idString);
         for (Map.Entry<String, List<Task>> project : tasks.entrySet()) {
             for (Task task : project.getValue()) {
                 if (task.getId() == id) {
-                    task.setDone(done);
-                    return;
+                    switch (action.toLowerCase()) {
+                        case "deadline" -> {
+                            task.setDeadline(parseDate(dateOrDone));
+                            return;
+                        }
+                        case "done" -> {
+                            task.setDone(Boolean.parseBoolean(dateOrDone));
+                            return;
+                        }
+                        default -> {
+                            out.println("Unknown action: " + action);
+                            return;
+                        }
+                    }
                 }
             }
         }
-        out.printf("Could not find a task with an ID of %d.", id);
-        out.println();
+        out.printf("Could not find a task with an ID of %d.%n", id);
     }
 
     private void help() {
@@ -136,6 +185,9 @@ public final class TaskList implements Runnable {
         out.println("  add task <project name> <task description>");
         out.println("  check <task ID>");
         out.println("  uncheck <task ID>");
+        out.println("  today {show all tasks for today}");
+        out.println("  deadline <task ID> <date> {add a task with deadline}");
+        out.println("  quit");
         out.println();
     }
 
