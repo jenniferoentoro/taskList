@@ -33,8 +33,14 @@ public class ProjectServiceImpl implements ProjectService {
     }
 
     @Override
-    public void addProject(ProjectDTO project) {
+    public Boolean addProject(ProjectDTO project) {
+        ProjectResponse projectResponse = findProjectByName(project.getName());
+        if (projectResponse != null) {
+            return false;
+        }
         projectRepository.save(modelMapper.map(project, Project.class));
+        
+        return true;
     }
 
 

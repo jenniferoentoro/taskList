@@ -11,9 +11,9 @@ import java.util.List;
 public interface TaskService {
     void addTask(TaskRequest task, long projectId);
 
-    void updateStateTask(long taskId, Boolean done);
+    Boolean updateStateTask(long taskId, Boolean done);
 
-    void setDeadline(long taskId, String deadline);
+    Boolean setDeadline(long taskId, String deadline);
 
     TaskResponse findTaskById(long taskId);
 

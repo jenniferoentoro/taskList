@@ -19,8 +19,6 @@ import java.util.stream.Collectors;
 @Service
 @Transactional
 public class TaskServiceImpl implements TaskService {
-
-
     private final TaskRepository taskRepository;
 
 
@@ -45,15 +43,15 @@ public class TaskServiceImpl implements TaskService {
 
 
     @Override
-    public void updateStateTask(long taskId, Boolean done) {
+    public Boolean updateStateTask(long taskId, Boolean done) {
         Optional<Task> task = taskRepository.findById(taskId);
         if (task.isPresent()) {
             Task taskFind = task.get();
             taskFind.setDone(done);
             taskRepository.save(taskFind);
-            return;
+            return true;
         }
-        throw new CustomException("Task not found");
+        return false;
     }
 
     public Date parseDate(String date) {
@@ -72,15 +70,15 @@ public class TaskServiceImpl implements TaskService {
 
 
     @Override
-    public void setDeadline(long taskId, String deadline) {
+    public Boolean setDeadline(long taskId, String deadline) {
         Optional<Task> task = taskRepository.findById(taskId);
         if (task.isPresent()) {
             Task taskFind = task.get();
             taskFind.setDeadline(parseDate(deadline));
             taskRepository.save(taskFind);
-            return;
+            return true;
         }
-        throw new CustomException("Task not found");
+        return false;
     }
 
 

@@ -7,7 +7,7 @@ import com.ortecfinance.tasklist.DTO.Task.TaskWithProjectResponse;
 import java.util.List;
 
 public interface ProjectService {
-    void addProject(ProjectDTO project);
+    Boolean addProject(ProjectDTO project);
 
     ProjectResponse findProjectByName(String projectName);
 

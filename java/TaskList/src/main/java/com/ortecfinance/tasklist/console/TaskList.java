@@ -188,28 +188,18 @@ public class TaskList implements Runnable {
     }
 
     private void addProject(String projectName) {
-        ProjectResponse projectResponse = projectService.findProjectByName(projectName);
-
-        if (projectResponse != null) {
-            out.println("Project with the same name already exists");
-            return;
+        Boolean success = projectService.addProject(new ProjectDTO(projectName));
+        if (!success) {
+            out.printf("Project %s already exists%n", projectName);
         }
-
-        projectService.addProject(new ProjectDTO(projectName));
     }
 
     private void deadline(String commandLine) {
         String[] subcommandRest = splitCommandLine(commandLine);
-        long id = Long.parseLong(subcommandRest[0]);
-        TaskResponse taskResponse = taskService.findTaskById(id);
-
-        if (taskResponse == null) {
+        Boolean success = taskService.setDeadline(Long.parseLong(subcommandRest[0]), subcommandRest[1]);
+        if (!success) {
             out.println("Task not found");
-            return;
         }
-
-        taskService.setDeadline(Long.parseLong(subcommandRest[0]), subcommandRest[1]);
-
     }
 
     private void addTask(String project, String description) {
@@ -223,13 +213,10 @@ public class TaskList implements Runnable {
 
 
     private void checkUnCheck(String idString, boolean isDone) {
-        long id = Long.parseLong(idString);
-        TaskResponse taskResponse = taskService.findTaskById(id);
-        if (taskResponse == null) {
+        Boolean success = taskService.updateStateTask(Long.parseLong(idString), isDone);
+        if (!success) {
             out.println("Task not found");
-            return;
         }
-        taskService.updateStateTask(id, isDone);
     }
 
 }
