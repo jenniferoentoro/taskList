@@ -1,45 +1,26 @@
 # taskList
 
-## Assignment 2
+## Assignment 3
 
 ### Features Added:
 
-- **View Tasks by Deadline**
+The codebase has been refactored to support multiple interfaces and follow a clean architecture.
 
-  - **Command:** `view-by-deadline`
-  - **Function:** Display all tasks grouped by their deadline in chronological order (tasks without a deadline are listed under a "No deadline" block at the end).
-  - **Example Output:**
-    ```
-    11-11-2021:
-          1: Eat more donuts.
-          4: Four Elements of Simple Design
-    13-11-2021:
-          3: Interaction-Driven Design
-    No deadline:
-          2: Refactor the codebase
-    ```
+#### Changes Made:
 
-- **Bonus: Group by Project**
-  - **Command:** `view-by-deadline-group`
-  - **Function:** Display all tasks grouped by their project and deadline in chronological order.
-  - **Example Output:**
-    ```
-    11-11-2021:
-        Secrets:
-            1: Eat more donuts.
-        Training:
-            4: Four Elements of Simple Design
-    13-11-2021:
-        Training:
-            3: Interaction-Driven Design
-    No deadline:
-        Training:
-            2: Refactor the codebase
-    ```
+1. **Database Integration:**
 
-### Tests:
+   - Added a PostgreSQL database.
+   - A `docker-compose` directory is included, allowing you to run the database with a single command (`docker-compose up`).
+   - Alternatively, the database is already configured in the IntelliJ run configurations. Simply select and run it `Start DB`.
 
-- Added test cases to verify tasks are correctly grouped by deadline.
-- Verified the chronological order and ensured the "No deadline" block appears last.
-- Validated the grouping by project within each deadline for the bonus feature.
-- Confirmed no existing functionality is broken.
+2. **Separation of Concerns:**
+
+   - The codebase is now structured into distinct layers:
+     - **Model:** Represents the application's data structure.
+     - **Repository:** Handles data persistence and retrieval.
+     - **Service:** Contains the core business logic.
+     - **Controller:** Manages communication between the service layer and external interfaces (e.g., CLI, REST API).
+
+3. **Support for DTOs:**
+   - Data Transfer Objects (DTOs) have been introduced to streamline data exchange between layers.
