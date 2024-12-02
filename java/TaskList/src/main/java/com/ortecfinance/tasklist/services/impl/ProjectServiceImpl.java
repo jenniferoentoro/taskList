@@ -49,11 +49,14 @@ public class ProjectServiceImpl implements ProjectService {
 
 
     @Override
-    public ProjectResponse findProjectById(long projectId) {
+    public TaskWithProjectResponse findProjectById(long projectId) {
         Optional<Project> project = projectRepository.findById(projectId);
-        if (project.isPresent()) {
-            return modelMapper.map(project.get(), ProjectResponse.class);
+
+        if(project.isPresent()) {
+            List<TaskResponse> taskResponses = taskService.findTasksByProjectId(projectId);
+            return new TaskWithProjectResponse(projectId, project.get().getName(), taskResponses);
         }
+
         throw new CustomException("Project not found");
     }
 

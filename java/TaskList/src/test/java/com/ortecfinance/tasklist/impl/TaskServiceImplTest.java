@@ -1,7 +1,9 @@
 package com.ortecfinance.tasklist.impl;
 
 import com.ortecfinance.tasklist.DTO.Project.ProjectDeadlineResponse;
+import com.ortecfinance.tasklist.DTO.Project.ProjectResponse;
 import com.ortecfinance.tasklist.DTO.Task.*;
+import com.ortecfinance.tasklist.helper.execptions.CustomException;
 import com.ortecfinance.tasklist.models.entities.Project;
 import com.ortecfinance.tasklist.models.entities.Task;
 import com.ortecfinance.tasklist.models.repositories.TaskRepository;
@@ -13,6 +15,7 @@ import org.mockito.Mock;
 import org.mockito.junit.jupiter.MockitoExtension;
 import org.modelmapper.ModelMapper;
 
+import java.text.SimpleDateFormat;
 import java.util.*;
 
 import static org.junit.jupiter.api.Assertions.*;
@@ -30,127 +33,187 @@ class TaskServiceImplTest {
     private ModelMapper modelMapper;
 
     @Test
-    void testAddTask_whenDeadlineIsNotNull() {
+    public void testAddTask() {
         long projectId = 1L;
         TaskRequest taskRequest = new TaskRequest();
         taskRequest.setDone(false);
         taskRequest.setDeadline("01-12-2024");
-
         Task taskEntity = new Task();
         taskEntity.setProject(new Project());
         taskEntity.setDone(false);
         taskEntity.setDeadline(new Date());
+        TaskResponse taskResponse = new TaskResponse();
 
         when(modelMapper.map(taskRequest, Task.class)).thenReturn(taskEntity);
         when(taskRepository.save(taskEntity)).thenReturn(taskEntity);
+        when(modelMapper.map(taskEntity, TaskResponse.class)).thenReturn(taskResponse);
 
-        taskService.addTask(taskRequest, projectId);
+        TaskResponse result = taskService.addTask(taskRequest, projectId);
 
+        assertEquals(taskResponse, result);
         verify(taskRepository, times(1)).save(taskEntity);
-        verify(modelMapper, times(1)).map(taskRequest, Task.class);
-        assertNotNull(taskEntity.getDeadline());
     }
 
+
+
     @Test
-    void testAddTask_whenDeadlineIsNull() {
-        long projectId = 1L;
+    void addTask_shouldSetDoneToFalseWhenDoneIsNull() {
         TaskRequest taskRequest = new TaskRequest();
-        taskRequest.setDone(false);
-        taskRequest.setDeadline(null);
+        taskRequest.setDone(null);
+        taskRequest.setDeadline("10-12-2024");
 
-        Task taskEntity = new Task();
-        taskEntity.setProject(new Project());
-        taskEntity.setDone(false);
-        taskEntity.setDeadline(null);
+        Task task = new Task();
+        task.setDone(false);
 
-        when(modelMapper.map(taskRequest, Task.class)).thenReturn(taskEntity);
-        when(taskRepository.save(taskEntity)).thenReturn(taskEntity);
+        Project project = new Project();
+        project.setId(1L);
+        task.setProject(project);
 
-        taskService.addTask(taskRequest, projectId);
+        TaskResponse taskResponse = new TaskResponse();
+        taskResponse.setDone(false);
 
-        verify(taskRepository, times(1)).save(taskEntity);
+        when(modelMapper.map(taskRequest, Task.class)).thenReturn(task);
+        when(taskRepository.save(task)).thenReturn(task);
+        when(modelMapper.map(task, TaskResponse.class)).thenReturn(taskResponse);
+
+        TaskResponse result = taskService.addTask(taskRequest, 1L);
+
+        assertNotNull(result);
+        assertFalse(taskRequest.isDone());
+
+        verify(taskRepository, times(1)).save(task);
         verify(modelMapper, times(1)).map(taskRequest, Task.class);
-        assertNull(taskEntity.getDeadline());
+        verify(modelMapper, times(1)).map(task, TaskResponse.class);
     }
 
 
     @Test
-    void testUpdateStateTask_taskExists() {
+    public void testRemoveTask_success() {
+        long projectId = 1L;
         long taskId = 1L;
-        Boolean done = true;
         Task task = new Task();
-        task.setId(taskId);
+        TaskResponse taskResponse = new TaskResponse();
 
         when(taskRepository.findById(taskId)).thenReturn(Optional.of(task));
-        when(taskRepository.save(task)).thenReturn(task);
+        when(modelMapper.map(task, TaskResponse.class)).thenReturn(taskResponse);
 
-        Boolean result = taskService.updateStateTask(taskId, done);
+        TaskResponse result = taskService.removeTask(projectId, taskId);
 
-        assertTrue(result);
-        assertEquals(done, task.getDone());
-        verify(taskRepository, times(1)).save(task);
+        assertEquals(taskResponse, result);
+        verify(taskRepository, times(1)).delete(task);
     }
 
     @Test
-    void testUpdateStateTask_taskExists_done_false() {
+    public void testRemoveTask_taskNotFound() {
+        long projectId = 1L;
         long taskId = 1L;
-        Boolean done = false;
-        Task task = new Task();
-        task.setId(taskId);
-
-        when(taskRepository.findById(taskId)).thenReturn(Optional.of(task));
-        when(taskRepository.save(task)).thenReturn(task);
-
-        Boolean result = taskService.updateStateTask(taskId, done);
-
-        assertTrue(result);
-        assertEquals(done, task.getDone());
-        verify(taskRepository, times(1)).save(task);
-    }
-
-
-    @Test
-    void testUpdateStateTask_taskNotFound() {
-        long taskId = 1L;
-        Boolean done = true;
 
         when(taskRepository.findById(taskId)).thenReturn(Optional.empty());
 
-        Boolean result = taskService.updateStateTask(taskId, done);
-
-        assertFalse(result);
-        verify(taskRepository, times(0)).save(any());
+        assertThrows(CustomException.class, () -> taskService.removeTask(projectId, taskId));
     }
 
     @Test
-    void testSetDeadline_taskExists() {
+    void testFindTaskByProjectIdAndId_success() {
+        long projectId = 1L;
         long taskId = 1L;
-        String deadline = "15-12-2024";
+
         Task task = new Task();
         task.setId(taskId);
+        task.setProject(new Project());
+        task.getProject().setId(projectId);
 
-        when(taskRepository.findById(taskId)).thenReturn(Optional.of(task));
+        TaskResponse taskResponse = new TaskResponse();
+        when(taskRepository.findByProjectIdAndId(projectId, taskId)).thenReturn(Optional.of(task));
+        when(modelMapper.map(task, TaskResponse.class)).thenReturn(taskResponse);
+
+        TaskResponse result = taskService.findTaskByProjectIdAndId(projectId, taskId);
+
+        assertEquals(taskResponse, result);
+        verify(taskRepository, times(1)).findByProjectIdAndId(projectId, taskId);
+        verify(modelMapper, times(1)).map(task, TaskResponse.class);
+    }
+
+    @Test
+    void testFindTaskByProjectIdAndId_taskNotFound() {
+        long projectId = 1L;
+        long taskId = 1L;
+
+        when(taskRepository.findByProjectIdAndId(projectId, taskId)).thenReturn(Optional.empty());
+
+        assertThrows(CustomException.class, () -> taskService.findTaskByProjectIdAndId(projectId, taskId));
+    }
+
+
+
+    @Test
+    public void testUpdateStateTask_success() {
+        long projectId = 1L;
+        long taskId = 1L;
+        Boolean done = true;
+        Task task = new Task();
+        task.setDone(done);
+        TaskResponse taskResponse = new TaskResponse();
+
+        when(taskRepository.findByProjectIdAndId(projectId, taskId)).thenReturn(Optional.of(task));
         when(taskRepository.save(task)).thenReturn(task);
+        when(modelMapper.map(task, TaskResponse.class)).thenReturn(taskResponse);
 
-        Boolean result = taskService.setDeadline(taskId, deadline);
+        TaskResponse result = taskService.updateStateTask(projectId, taskId, done);
 
-        assertTrue(result);
-        assertNotNull(task.getDeadline());
+        assertEquals(taskResponse, result);
         verify(taskRepository, times(1)).save(task);
     }
 
     @Test
-    void testSetDeadline_taskNotFound() {
+    public void testUpdateStateTask_taskNotFound() {
+        long projectId = 1L;
         long taskId = 1L;
-        String deadline = "15-12-2024";
+        Boolean done = true;
 
-        when(taskRepository.findById(taskId)).thenReturn(Optional.empty());
+        when(taskRepository.findByProjectIdAndId(projectId, taskId)).thenReturn(Optional.empty());
 
-        Boolean result = taskService.setDeadline(taskId, deadline);
-
-        assertFalse(result);
-        verify(taskRepository, times(0)).save(any());
+        assertThrows(CustomException.class, () -> taskService.updateStateTask(projectId, taskId, done));
     }
+
+    @Test
+    public void testSetDeadline_success() {
+        long projectId = 1L;
+        long taskId = 1L;
+        String deadline = "01-12-2024";
+        Task task = new Task();
+        task.setDeadline(new Date());
+        TaskResponse taskResponse = new TaskResponse();
+
+        when(taskRepository.findByProjectIdAndId(projectId, taskId)).thenReturn(Optional.of(task));
+        when(modelMapper.map(task, TaskResponse.class)).thenReturn(taskResponse);
+
+        TaskResponse result = taskService.setDeadline(projectId, taskId, deadline);
+
+        assertEquals(taskResponse, result);
+        verify(taskRepository, times(1)).save(task);
+    }
+
+    @Test
+    public void testSetDeadline_taskNotFound() {
+        long projectId = 1L;
+        long taskId = 1L;
+        String deadline = "01-12-2024";
+
+        when(taskRepository.findByProjectIdAndId(projectId, taskId)).thenReturn(Optional.empty());
+
+        assertThrows(CustomException.class, () -> taskService.setDeadline(projectId, taskId, deadline));
+    }
+
+    @Test
+    public void testSetDeadline_invalidDateFormat() {
+        long projectId = 1L;
+        long taskId = 1L;
+        String invalidDeadline = "invalid-date-format";
+
+        assertThrows(CustomException.class, () -> taskService.setDeadline(projectId, taskId, invalidDeadline));
+    }
+
 
     @Test
     void testFindTasksByProjectId() {
@@ -173,6 +236,30 @@ class TaskServiceImplTest {
         verify(modelMapper, times(1)).map(tasks, TaskResponse[].class);
     }
 
+
+
+    @Test
+    public void testParseDate_validDate() {
+        Date date = taskService.parseDate("15-10-2024");
+        assertNotNull(date);
+        assertEquals("15-10-2024", new SimpleDateFormat("dd-MM-yyyy").format(date));
+    }
+
+    @Test
+    public void testParseDate_today(){
+        SimpleDateFormat sdf = new SimpleDateFormat("dd-MM-yyyy");
+        sdf.setTimeZone(TimeZone.getTimeZone("UTC"));
+        String today = sdf.format(new Date());
+
+        Date todayDate = taskService.parseDate("today");
+        assertNotNull(todayDate);
+        assertEquals(today, new SimpleDateFormat("dd-MM-yyyy").format(todayDate));
+    }
+
+    @Test
+    public void testParseDate_invalidDateFormat() {
+        assertThrows(CustomException.class, () -> taskService.parseDate("invalid-date-format"));
+    }
 
     @Test
     void testFindAllTasksGroupedByProjectWithDeadlines_whenFindDeadlineIsNull() {

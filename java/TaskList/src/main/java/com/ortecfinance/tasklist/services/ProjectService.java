@@ -12,7 +12,7 @@ public interface ProjectService {
 
     ProjectResponse removeProject(long projectId);
 
-    ProjectResponse findProjectById(long projectId);
+    TaskWithProjectResponse findProjectById(long projectId);
 
     List<TaskWithProjectResponse> findAllTasksGroupedByProject();
 

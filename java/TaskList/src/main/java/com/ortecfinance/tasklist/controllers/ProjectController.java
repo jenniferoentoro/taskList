@@ -30,7 +30,7 @@ public class ProjectController {
     }
 
     @GetMapping("/{projectId}")
-    public ResponseEntity<ProjectResponse> findProjectById(@PathVariable("projectId") long projectId) {
+    public ResponseEntity<TaskWithProjectResponse> findProjectById(@PathVariable("projectId") long projectId) {
         return ResponseEntity.ok(projectService.findProjectById(projectId));
     }
 

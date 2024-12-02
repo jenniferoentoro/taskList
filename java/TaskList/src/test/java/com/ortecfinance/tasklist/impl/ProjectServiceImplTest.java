@@ -4,10 +4,12 @@ import com.ortecfinance.tasklist.DTO.Project.ProjectDTO;
 import com.ortecfinance.tasklist.DTO.Project.ProjectResponse;
 import com.ortecfinance.tasklist.DTO.Task.TaskResponse;
 import com.ortecfinance.tasklist.DTO.Task.TaskWithProjectResponse;
+import com.ortecfinance.tasklist.helper.execptions.CustomException;
 import com.ortecfinance.tasklist.models.entities.Project;
 import com.ortecfinance.tasklist.models.repositories.ProjectRepository;
 import com.ortecfinance.tasklist.services.TaskService;
 import com.ortecfinance.tasklist.services.impl.ProjectServiceImpl;
+import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
 import org.mockito.InjectMocks;
@@ -34,68 +36,74 @@ class ProjectServiceImplTest {
 
     @Mock
     private ModelMapper modelMapper;
+    private ProjectDTO projectDTO;
+    private Project projectEntity;
+    private ProjectResponse projectResponse;
+
+    @BeforeEach
+    void setUp() {
+        projectDTO = new ProjectDTO("Test Project");
+        projectEntity = new Project();
+        projectEntity.setId(1L);
+        projectEntity.setName("Test Project");
+
+        projectResponse = new ProjectResponse(1L, "Test Project");
+    }
 
     @Test
-    void testAddProject_success() {
-        ProjectDTO projectDTO = new ProjectDTO();
-        projectDTO.setName("Project 1");
-
-        when(projectService.findProjectByName("Project 1")).thenReturn(Optional.empty());
-
-        Project projectEntity = new Project();
+    void testAddProject() {
         when(modelMapper.map(projectDTO, Project.class)).thenReturn(projectEntity);
         when(projectRepository.save(projectEntity)).thenReturn(projectEntity);
+        when(modelMapper.map(projectEntity, ProjectResponse.class)).thenReturn(projectResponse);
 
-        Boolean result = projectService.addProject(projectDTO);
+        ProjectResponse result = projectService.addProject(projectDTO);
 
-        assertTrue(result);
-        verify(projectRepository, times(1)).save(projectEntity);
+        assertNotNull(result);
+        assertEquals(projectResponse.getId(), result.getId());
+        assertEquals(projectResponse.getName(), result.getName());
+    }
+
+
+    @Test
+    void testRemoveProject_ProjectExists() {
+        when(projectRepository.findById(1L)).thenReturn(Optional.of(projectEntity));
+        when(modelMapper.map(projectEntity, ProjectResponse.class)).thenReturn(projectResponse);
+
+        ProjectResponse result = projectService.removeProject(1L);
+
+        assertNotNull(result);
+        assertEquals(projectResponse.getId(), result.getId());
+        assertEquals(projectResponse.getName(), result.getName());
+        verify(projectRepository, times(1)).delete(projectEntity);
     }
 
     @Test
-    void testAddProject_projectAlreadyExists() {
-        ProjectDTO projectDTO = new ProjectDTO();
-        projectDTO.setName("Project 1");
-        Project project = new Project();
-        project.setName("Project 1");
+    void testRemoveProject_ProjectNotFound() {
+        when(projectRepository.findById(1L)).thenReturn(Optional.empty());
 
-        ProjectResponse existingProject = new ProjectResponse();
-        existingProject.setName("Project 1");
-
-        when(projectService.findProjectByName("Project 1")).thenReturn(Optional.of(existingProject));
-        when(projectRepository.findByName("Project 1")).thenReturn(Optional.of(project));
-        when(modelMapper.map(project, ProjectResponse.class)).thenReturn(existingProject);
-
-        Boolean result = projectService.addProject(projectDTO);
-
-        assertFalse(result);
-        verify(projectRepository, times(0)).save(any());
+        assertThrows(CustomException.class, () -> projectService.removeProject(1L));
     }
 
     @Test
-    void testFindProjectByName_found() {
-        Project project = new Project();
-        project.setName("Project 1");
-        ProjectResponse projectResponse = new ProjectResponse();
-        projectResponse.setName("Project 1");
+    void testFindProjectById_ProjectExists() {
+        when(projectRepository.findById(1L)).thenReturn(Optional.of(projectEntity));
+        when(taskService.findTasksByProjectId(1L)).thenReturn(List.of());
 
-        when(projectRepository.findByName("Project 1")).thenReturn(Optional.of(project));
-        when(modelMapper.map(project, ProjectResponse.class)).thenReturn(projectResponse);
+        TaskWithProjectResponse result = projectService.findProjectById(1L);
 
-        Optional<ProjectResponse> result = projectService.findProjectByName("Project 1");
-
-        assertTrue(result.isPresent());
-        assertEquals("Project 1", result.get().getName());
+        assertNotNull(result);
+        assertEquals(projectEntity.getId(), result.getId());
+        assertEquals(projectEntity.getName(), result.getName());
+        assertTrue(result.getTasks().isEmpty());
     }
 
     @Test
-    void testFindProjectByName_notFound() {
-        when(projectRepository.findByName("NonExistingProject")).thenReturn(Optional.empty());
+    void testFindProjectById_ProjectNotFound() {
+        when(projectRepository.findById(1L)).thenReturn(Optional.empty());
+        assertThrows(CustomException.class, () -> projectService.findProjectById(1L));
 
-        Optional<ProjectResponse> result = projectService.findProjectByName("NonExistingProject");
-
-        assertFalse(result.isPresent());
     }
+
 
     @Test
     void testFindAllTasksGroupedByProject() {
@@ -127,7 +135,7 @@ class ProjectServiceImplTest {
         assertEquals(projectName2, result.get(1).getName());
         assertEquals(1, result.get(1).getTasks().size());
     }
-    
+
     @Test
     void testFindAllTasksGroupedByProject_emptyProjects() {
         when(projectRepository.findAll()).thenReturn(List.of());
