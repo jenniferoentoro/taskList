@@ -1,10 +1,5 @@
 package com.ortecfinance.tasklist.DTO.Task;
 
-import com.fasterxml.jackson.annotation.JsonFormat;
-import com.ortecfinance.tasklist.DTO.Project.ProjectResponse;
-import jakarta.validation.constraints.NotBlank;
-
-import java.util.Date;
 
 
 public class TaskBaseDTO {

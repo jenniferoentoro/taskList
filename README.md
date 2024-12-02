@@ -43,6 +43,3 @@ To generate the report, follow these steps:
 
 The report will be available at:  
 `target/site/jacoco/index.html`
-
-Test Coverage:
-After running the tests, the JaCoCo report confirmed 100% test coverage for the service layer.

@@ -94,6 +94,8 @@
                         <configuration>
                             <includes>
                                 <include>com/ortecfinance/tasklist/services/impl/**</include>
+                                <include>com/ortecfinance/tasklist/controllers/**</include>
+
                             </includes>
                         </configuration>
                     </execution>

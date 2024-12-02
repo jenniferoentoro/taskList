@@ -1,6 +1,5 @@
 package com.ortecfinance.tasklist.DTO.Task;
 
-import java.util.List;
 
 public class TaskWithProjectResponseBase {
 

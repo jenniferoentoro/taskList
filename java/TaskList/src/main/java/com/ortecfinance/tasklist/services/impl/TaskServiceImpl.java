@@ -6,7 +6,6 @@ import com.ortecfinance.tasklist.helper.execptions.CustomException;
 import com.ortecfinance.tasklist.models.entities.Project;
 import com.ortecfinance.tasklist.models.entities.Task;
 import com.ortecfinance.tasklist.models.repositories.TaskRepository;
-import com.ortecfinance.tasklist.services.ProjectService;
 import com.ortecfinance.tasklist.services.TaskService;
 import jakarta.transaction.Transactional;
 import org.modelmapper.ModelMapper;

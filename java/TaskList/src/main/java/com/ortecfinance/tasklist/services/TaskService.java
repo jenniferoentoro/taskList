@@ -4,7 +4,6 @@ import com.ortecfinance.tasklist.DTO.Project.ProjectDeadlineResponse;
 import com.ortecfinance.tasklist.DTO.Task.TaskDeadlineResponse;
 import com.ortecfinance.tasklist.DTO.Task.TaskRequest;
 import com.ortecfinance.tasklist.DTO.Task.TaskResponse;
-import com.ortecfinance.tasklist.DTO.Task.TaskWithProjectResponse;
 
 import java.util.List;
 

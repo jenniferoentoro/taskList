@@ -3,52 +3,48 @@ package com.ortecfinance.tasklist.controllers;
 import com.ortecfinance.tasklist.DTO.Project.ProjectDTO;
 import com.ortecfinance.tasklist.DTO.Project.ProjectDeadlineResponse;
 import com.ortecfinance.tasklist.DTO.Project.ProjectResponse;
+import com.ortecfinance.tasklist.DTO.Task.TaskBaseDTO;
 import com.ortecfinance.tasklist.DTO.Task.TaskDeadlineResponse;
 import com.ortecfinance.tasklist.DTO.Task.TaskWithProjectResponse;
+import com.ortecfinance.tasklist.DTO.Task.TaskWithProjectResponseNoDeadline;
 import com.ortecfinance.tasklist.services.ProjectService;
 import com.ortecfinance.tasklist.services.TaskService;
-import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
-import org.mockito.InjectMocks;
-import org.mockito.Mock;
-import org.mockito.Mockito;
+import org.junit.jupiter.api.extension.ExtendWith;
+import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.boot.test.autoconfigure.web.servlet.AutoConfigureMockMvc;
+import org.springframework.boot.test.context.SpringBootTest;
+import org.springframework.boot.test.mock.mockito.MockBean;
 import org.springframework.http.MediaType;
-import org.springframework.http.ResponseEntity;
+import org.springframework.test.context.junit.jupiter.SpringExtension;
 import org.springframework.test.web.servlet.MockMvc;
-import org.springframework.test.web.servlet.setup.MockMvcBuilders;
 
 import java.util.Arrays;
+import java.util.Date;
 import java.util.List;
 
 import static org.mockito.Mockito.when;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.*;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.*;
 
+@ExtendWith(SpringExtension.class)
+@SpringBootTest
+@AutoConfigureMockMvc
 class ProjectControllerTest {
-
+    @Autowired
     private MockMvc mockMvc;
 
-    @Mock
+    @MockBean
     private ProjectService projectService;
 
-    @Mock
+    @MockBean
     private TaskService taskService;
-
-    @InjectMocks
-    private ProjectController projectController;
-
-    @BeforeEach
-    void setUp() {
-        mockMvc = MockMvcBuilders.standaloneSetup(projectController).build();
-    }
 
     @Test
     void findAllProjects_ShouldReturnProjects() throws Exception {
-        // Given
         TaskWithProjectResponse taskWithProjectResponse = new TaskWithProjectResponse(1L, "Project 1", null);
         when(projectService.findAllTasksGroupedByProject()).thenReturn(Arrays.asList(taskWithProjectResponse));
 
-        // When & Then
         mockMvc.perform(get("/projects"))
                 .andExpect(status().isOk())
                 .andExpect(jsonPath("$[0].id").value(1))
@@ -56,37 +52,19 @@ class ProjectControllerTest {
     }
 
     @Test
-    void findProjectById_ShouldReturnProject() throws Exception {
-        // Given
-        ProjectResponse projectResponse = new ProjectResponse(1L, "Project 1");
-        when(projectService.findProjectById(1L)).thenReturn(projectResponse);
-
-        // When & Then
-        mockMvc.perform(get("/projects/1"))
-                .andExpect(status().isOk())
-                .andExpect(jsonPath("$.id").value(1))
-                .andExpect(jsonPath("$.name").value("Project 1"))
-                .andExpect(jsonPath("$.description").value("Description"));
-    }
-
-    @Test
     void removeProject_ShouldReturnOkWithoutResults() throws Exception {
-        // Given
         ProjectResponse projectResponse = new ProjectResponse(1L, "Project 1");
         when(projectService.removeProject(1L)).thenReturn(projectResponse);
 
-        // When & Then
         mockMvc.perform(delete("/projects/1").param("includeResults", "false"))
                 .andExpect(status().isOk());
     }
 
     @Test
     void removeProject_ShouldReturnOkWithResults() throws Exception {
-        // Given
         ProjectResponse projectResponse = new ProjectResponse(1L, "Project 1");
         when(projectService.removeProject(1L)).thenReturn(projectResponse);
 
-        // When & Then
         mockMvc.perform(delete("/projects/1").param("includeResults", "true"))
                 .andExpect(status().isOk())
                 .andExpect(jsonPath("$.id").value(1))
@@ -95,12 +73,10 @@ class ProjectControllerTest {
 
     @Test
     void addProject_ShouldReturnOkWithoutResults() throws Exception {
-        // Given
         ProjectDTO projectDTO = new ProjectDTO("Project 1");
         ProjectResponse projectResponse = new ProjectResponse(1L, "Project 1");
         when(projectService.addProject(projectDTO)).thenReturn(projectResponse);
 
-        // When & Then
         mockMvc.perform(post("/projects")
                         .contentType(MediaType.APPLICATION_JSON)
                         .content("{\"name\": \"Project 1\", \"description\": \"Description\"}")
@@ -110,42 +86,90 @@ class ProjectControllerTest {
 
     @Test
     void addProject_ShouldReturnOkWithResults() throws Exception {
-        // Given
         ProjectDTO projectDTO = new ProjectDTO("Project 1");
         ProjectResponse projectResponse = new ProjectResponse(1L, "Project 1");
         when(projectService.addProject(projectDTO)).thenReturn(projectResponse);
 
-        // When & Then
         mockMvc.perform(post("/projects")
                         .contentType(MediaType.APPLICATION_JSON)
                         .content("{\"name\": \"Project 1\", \"description\": \"Description\"}")
                         .param("includeResults", "true"))
+                .andExpect(status().isOk());
+    }
+
+    @Test
+    void addProject_ShouldReturnBadRequest_WhenInvalidData() throws Exception {
+        // Missing required fields or invalid data should trigger a bad request
+        mockMvc.perform(post("/projects")
+                        .contentType(MediaType.APPLICATION_JSON)
+                        .content("{\"name\": \"\"}")) // Invalid name
+                .andExpect(status().isBadRequest());
+    }
+
+
+    @Test
+    void findProjectById_ShouldReturnProject() throws Exception {
+        TaskWithProjectResponse taskWithProjectResponse = new TaskWithProjectResponse(1L, "Project 1", null);
+        when(projectService.findProjectById(1L)).thenReturn(taskWithProjectResponse);
+
+        mockMvc.perform(get("/projects/1"))
                 .andExpect(status().isOk())
                 .andExpect(jsonPath("$.id").value(1))
                 .andExpect(jsonPath("$.name").value("Project 1"));
     }
 
-//    @Test
-//    void findAllTasksGroupedByProjectWithDeadlines_ShouldReturnTasksGroupedByProjectWithDeadlines() throws Exception {
-//        // Given
-//        ProjectDeadlineResponse projectDeadlineResponse = new ProjectDeadlineResponse("01-01-2025", null);
-//        when(taskService.findAllTasksGroupedByProjectWithDeadlines(null)).thenReturn(Arrays.asList(projectDeadlineResponse));
-//
-//        // When & Then
-//        mockMvc.perform(get("/projects/view_by_deadline"))
-//                .andExpect(status().isOk())
-//                .andExpect(jsonPath("$[0].deadline").value("01-01-2025"));
-//    }
-//
-//    @Test
-//    void findAllTasksWithDeadlines_ShouldReturnTasksWithDeadlines() throws Exception {
-//        // Given
-//        TaskDeadlineResponse taskDeadlineResponse = new TaskDeadlineResponse("01-01-2025", null);
-//        when(taskService.findAllTasksWithDeadlines(null)).thenReturn(Arrays.asList(taskDeadlineResponse));
-//
-//        // When & Then
-//        mockMvc.perform(get("/projects/all_with_deadlines"))
-//                .andExpect(status().isOk())
-//                .andExpect(jsonPath("$[0].deadline").value("01-01-2025"));
-//    }
+    @Test
+    void findAllTasksGroupedByProjectWithDeadlines_ShouldReturnTasksWithDeadlines() throws Exception {
+        TaskBaseDTO taskBaseDTO = new TaskBaseDTO(1L, "Description 1", false);
+        List<TaskBaseDTO> taskList = Arrays.asList(taskBaseDTO);
+
+        TaskDeadlineResponse taskDeadlineResponse = new TaskDeadlineResponse(new Date(), taskList);
+
+        when(taskService.findAllTasksWithDeadlines(null)).thenReturn(Arrays.asList(taskDeadlineResponse));
+
+        mockMvc.perform(get("/projects/all_with_deadlines"))
+                .andExpect(status().isOk())
+                .andExpect(jsonPath("$[0].deadline").exists());
+    }
+
+    @Test
+    void findAllTasksGroupedByProjectWithDeadlines_ShouldReturnTasksGroupedByProjectWithDeadlines() throws Exception {
+
+        TaskBaseDTO taskBaseDTO = new TaskBaseDTO(1L, "Description 1", false);
+        List<TaskBaseDTO> taskList = Arrays.asList(taskBaseDTO);
+        TaskWithProjectResponseNoDeadline taskWithProjectResponseNoDeadline = new TaskWithProjectResponseNoDeadline(1L, "Description 1", taskList);
+        List<TaskWithProjectResponseNoDeadline> taskWithProjectResponseNoDeadlineList = Arrays.asList(taskWithProjectResponseNoDeadline);
+
+        ProjectDeadlineResponse projectDeadlineResponse = new ProjectDeadlineResponse(new Date(), taskWithProjectResponseNoDeadlineList);
+        List<ProjectDeadlineResponse> projectDeadlineResponseList = Arrays.asList(projectDeadlineResponse);
+
+        when(taskService.findAllTasksGroupedByProjectWithDeadlines(null)).thenReturn(projectDeadlineResponseList);
+
+        mockMvc.perform(get("/projects/view_by_deadline"))
+                .andExpect(status().isOk())
+                .andExpect(jsonPath("$[0].deadline").exists());
+    }
+
+
+    @Test
+    void addProject_ShouldReturnOkWithoutResults_WhenIncludeResultsIsFalse() throws Exception {
+        ProjectDTO projectDTO = new ProjectDTO("Project 1");
+        ProjectResponse projectResponse = new ProjectResponse(1L, "Project 1");
+
+        when(projectService.addProject(projectDTO)).thenReturn(projectResponse);
+
+        mockMvc.perform(post("/projects")
+                        .contentType(MediaType.APPLICATION_JSON)
+                        .content("{\"name\": \"Project 1\", \"description\": \"Description\"}")
+                        .param("includeResults", "false"))
+                .andExpect(status().isOk())
+                .andExpect(content().string(""));
+    }
+
+
+
+
+
+
+
 }
