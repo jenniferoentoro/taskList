@@ -26,8 +26,8 @@ public class TaskList implements Runnable {
 
     private static final SimpleDateFormat DATE_FORMATTER = new SimpleDateFormat("dd-MM-yyyy");
 
-    private final BufferedReader in;
-    private final PrintWriter out;
+    private BufferedReader in;
+    private PrintWriter out;
     private final ProjectService projectService;
     private final TaskService taskService;
 
@@ -39,12 +39,14 @@ public class TaskList implements Runnable {
         this.taskService = taskService;
     }
 
-    public TaskList(ProjectService projectService, TaskService taskService, BufferedReader reader, PrintWriter writer) {
-        this.in = reader;
-        this.out = writer;
-        this.projectService = projectService;
-        this.taskService = taskService;
+    public void setBufferedReader(BufferedReader in) {
+        this.in = in;
     }
+
+    public void setPrintWriter(PrintWriter out) {
+        this.out = out;
+    }
+
 
     public static void startConsole(TaskList taskList) {
         taskList.run();
@@ -114,10 +116,9 @@ public class TaskList implements Runnable {
     private void viewByDeadline() {
         taskService.findAllTasksWithDeadlines(null).forEach(taskDeadlineResponse -> {
             String deadlineText = formatDeadline(taskDeadlineResponse.getDeadline());
-            out.println(deadlineText);
+            out.println(deadlineText + ":");
 
             taskDeadlineResponse.getTask().forEach(task -> printTask(task, deadlineText));
-            out.println();
         });
     }
 
@@ -125,13 +126,12 @@ public class TaskList implements Runnable {
     private void viewByDeadlineGroup() {
         taskService.findAllTasksGroupedByProjectWithDeadlines(null).forEach(projectDeadlineResponse -> {
             String deadlineText = formatDeadline(projectDeadlineResponse.getDeadline());
-            out.println(deadlineText);
+            out.println(deadlineText+":");
 
             projectDeadlineResponse.getProject().forEach(taskWithProjectResponse -> {
-                out.println("  " + taskWithProjectResponse.getName());
+                out.println("  " + taskWithProjectResponse.getName() +":");
                 taskWithProjectResponse.getTasks().forEach(task -> printTask(task, deadlineText));
             });
-            out.println();
         });
     }
 
@@ -144,16 +144,19 @@ public class TaskList implements Runnable {
     }
 
     private void showToday() {
-        taskService.findAllTasksGroupedByProjectWithDeadlines("today").forEach(projectDeadlineResponse -> {
+
+        List<ProjectDeadlineResponse> projectDeadlineResponses = taskService.findAllTasksGroupedByProjectWithDeadlines("today");
+
+        projectDeadlineResponses.forEach(projectDeadlineResponse -> {
             String deadlineText = formatDeadline(projectDeadlineResponse.getDeadline());
-            out.println(deadlineText);
 
             projectDeadlineResponse.getProject().forEach(taskWithProjectResponse -> {
                 out.println("  " + taskWithProjectResponse.getName());
                 taskWithProjectResponse.getTasks().forEach(task -> printTask(task, deadlineText));
             });
-            out.println();
         });
+
+
     }
 
     private void printTask(TaskBaseDTO task, String deadline) {
