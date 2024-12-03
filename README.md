@@ -34,6 +34,8 @@ Postman collection can be found at: [Postman Collection](https://www.postman.com
 
 ### Tests:
 
+The tests are available for the service and controller layer.
+
 The project includes a JaCoCo test report.
 
 To generate the report, follow these steps:
