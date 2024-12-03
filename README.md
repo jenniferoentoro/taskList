@@ -27,7 +27,7 @@ Postman collection can be found at: [Postman Collection](https://www.postman.com
 
 2. **Task:**
    - `(POST)` `/projects/{projectId}/tasks?includeResults={boolean}` = Add a new task to a project. Optional param: `includeResults` (set to `true` or `false` to show the result).
-   - `(PUT)` `/projects/{projectId}/tasks/{taskId}?deadline={date}&done={boolean}&includeResults={boolean}` = Update a task's deadline or state. Optional param: `includeResults` (set to `true` or `false` to show the result).
+   - `(PUT)` `/projects/{projectId}/tasks/{taskId}?deadline={date}&done={boolean}&includeResults={boolean}` = Update a task's deadline or state. **At least one of `deadline` or `done` must be provided**. Additional optional param: `includeResults` (set to `true` or `false` to show the result).
    - `(GET)` `/projects/{projectId}/tasks/` = Find tasks by project ID.
    - `(GET)` `/projects/{projectId}/tasks/{taskId}` = Find a task by project ID and task ID.
    - `(DELETE)` `/projects/{projectId}/tasks/{taskId}?includeResults={boolean}` = Delete a task. Optional param: `includeResults` (set to `true` or `false` to show the result).
