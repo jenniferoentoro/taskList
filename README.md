@@ -26,7 +26,9 @@ The console application will start automatically after the Spring Boot applicati
 3. **Support for DTOs:**
    - Data Transfer Objects (DTOs) have been introduced to streamline data exchange between layers.
 
-
+4. **Testing:**
+   - It uses h2 database for testing.
+   - Available for the console and service layers.
 ### List of Commands:
 - `show`: Display all tasks.
 - `add project <project name>`: Add a new project.
@@ -38,3 +40,5 @@ The console application will start automatically after the Spring Boot applicati
 - `view-by-deadline`: Show all tasks sorted by their deadline.
 - `view-by-deadline-group`: Show all tasks grouped by both deadline and project.
 - `quit`: Exit the application.
+
+
